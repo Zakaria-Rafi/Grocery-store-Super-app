@@ -1,0 +1,81 @@
+services:
+  backend:
+    container_name: backend-trinity-nan11
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
+      - ./backend/node_modules:/app/node_modules
+
+  frontend:
+    container_name: frontend-trinity-nan11
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - ./frontend/node_modules:/app/node_modules
+      - ./releasenotes/releasenotes-en.md:/app/public/releasenotes/releasenotes-en.md
+      - ./releasenotes/releasenotes-fr.md:/app/public/releasenotes/releasenotes-fr.md
+    
+  nginx:
+    image: nginx:latest
+    container_name: nginx-load-balancer
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    environment:
+      GF_INSTALL_PLUGINS: grafana-polystat-panel, yesoreyeram-boomtable-panel
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-}
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  postgres:
+    image: postgres:latest
+    restart: always
+  
+  minio:
+    image: quay.io/minio/minio
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: quay.io/minio/mc
+    depends_on:
+      - minio
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - trinity_network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+    networks:
+      - trinity_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.3
+    networks:
+      - trinity_network
+
+volumes:
+  grafana_data:
+  postgres_data:
+  minio_data:
+  
+networks:
+  trinity_network:
+    driver: bridge
+  runner_network:
+    external: true

@@ -1,0 +1,171 @@
+services:
+  backend:
+    profiles:
+      - backend
+      - all
+    ports:
+      - "4000:4000"
+    networks:
+      - trinity_network
+    environment:
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+      POSTGRES_HOST: postgres
+      DATABASE_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+      PAYPAL_RETURN_URL: ${PAYPAL_RETURN_URL}
+      PAYPAL_CANCEL_URL: ${PAYPAL_CANCEL_URL}
+      PAYPAL_ENVIRONMENT : ${PAYPAL_ENVIRONMENT}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      STRIPE_SUCCESS_URL_MOBILE: ${STRIPE_SUCCESS_URL_MOBILE}
+      STRIPE_CANCEL_URL_MOBILE: ${STRIPE_CANCEL_URL_MOBILE}
+      PAYPAL_SUCCESS_URL_MOBILE: ${PAYPAL_SUCCESS_URL_MOBILE}
+      PAYPAL_CANCEL_URL_MOBILE: ${PAYPAL_CANCEL_URL_MOBILE}
+      ELASTICSEARCH_NODE: ${ELASTICSEARCH_NODE}
+      ELASTICSEARCH_USERNAME: ${ELASTICSEARCH_USERNAME}
+      ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD}
+      ELASTICSEARCH_INDEX: ${ELASTICSEARCH_INDEX}
+
+    volumes:
+      - ./VERSION:/app/VERSION
+
+  frontend:
+    ports:
+      - 3000:3000
+    profiles:
+      - frontend
+      - all
+    networks:
+      - trinity_network
+
+  nginx:
+    build:
+      context: ./monitoring/Nginx-ReverseProxy
+      dockerfile: Dockerfile
+      args:
+        - CERT_DOMAIN=localhost
+    environment:
+      - FRONTEND_HOST=${EXTERNAL_DNS_NAME_OR_IP}:3000
+      - BACKEND_HOST=${EXTERNAL_DNS_NAME_OR_IP}:4000
+    profiles:
+      - backend
+      - all
+      - frontend
+    volumes:
+      - ./monitoring/Nginx-ReverseProxy/nginx.conf.template:/etc/nginx/templates/nginx.conf.template
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - trinity_network
+      
+
+  prometheus:
+    profiles:
+      - backend
+      - all
+      - frontend
+    ports:
+      - 9090:9090
+    networks:
+      - runner_network
+  
+  grafana:
+    profiles:
+      - backend
+      - all
+      - frontend
+    ports:
+      - 3001:3000
+    networks:
+      - runner_network
+
+  postgres:
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    profiles:
+      - backend
+      - frontend
+      - all
+    ports:
+      - 5432:5432
+    networks:
+      - trinity_network
+
+  minio:
+    ports:
+      - 9000:9000
+      - 9001:9001
+    profiles:
+      - backend
+      - all 
+      - frontend
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password}
+      MINIO_ADDRESS: ':9000'
+      MINIO_CONSOLE_ADDRESS: ':9001'
+    command: 'minio server /data/minio --console-address ":9001"'
+    networks:
+      - trinity_network
+      
+  minio-init:
+    profiles:
+      - backend
+      - all 
+      - frontend
+    environment:
+      - BUCKET_NAME=trinity
+      - ENDPOINT=http://minio:9000
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add myminio http://minio:9000 ${MINIO_ROOT_USER:-admin} ${MINIO_ROOT_PASSWORD:-password}) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb myminio/trinity;
+      /usr/bin/mc anonymous set public myminio/trinity;
+      exit 0;
+      "
+    networks:
+      - trinity_network
+    
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - trinity_network
+    profiles:
+      - backend
+      - all
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.0
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    networks:
+      - trinity_network
+    profiles:
+      - backend
+      - all
+
+volumes:
+  esdata:
+   driver: local

@@ -1,0 +1,21 @@
+# Utiliser l'image Node.js LTS la plus récente
+FROM rg.fr-par.scw.cloud/epitech-nantes-at/trinity-node22-pnpm-git-alpine:latest
+ENV NODE_ENV=development
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de configuration de base
+COPY package*.json ./
+
+# Installer les dépendances en mode développement
+RUN pnpm install
+
+# Copier tout le code source
+COPY . .
+
+# Exposer le port (modifiez si votre app utilise un autre port)
+EXPOSE 4000
+
+# Démarrer l'application NestJS en mode développement
+CMD ["pnpm", "start:docker"]

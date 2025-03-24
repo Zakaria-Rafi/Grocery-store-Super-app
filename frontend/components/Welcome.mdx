@@ -1,0 +1,79 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Bienvenue" />
+
+<div className="welcome-container">
+  <div className="welcome-header">
+    # Bienvenue sur notre Design System
+    
+    Notre design system est conçu pour vous aider à créer des interfaces utilisateur cohérentes et élégantes. Découvrez nos composants et guides ci-dessous.
+  </div>
+
+  <div className="welcome-grid">
+    <div className="welcome-card">
+      <h3>🎨 Composants</h3>
+      <p>Explorez notre bibliothèque de composants réutilisables, documentés et testés.</p>
+    </div>
+
+    <div className="welcome-card">
+      <h3>📚 Guidelines</h3>
+      <p>Consultez nos guides de style et bonnes pratiques pour maintenir la cohérence.</p>
+    </div>
+
+    <div className="welcome-card">
+      <h3>🚀 Démarrage rapide</h3>
+      <p>Nouveau ? Commencez ici pour comprendre comment utiliser notre design system.</p>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  {`
+  .welcome-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .welcome-header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .welcome-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .welcome-card {
+    padding: 2rem;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .welcome-card h3 {
+    margin-top: 0;
+    color: #333;
+  }
+
+  .welcome-card a {
+    display: inline-block;
+    margin-top: 1rem;
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  .welcome-card a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .welcome-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+`}
+</style>

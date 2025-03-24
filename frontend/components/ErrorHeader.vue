@@ -1,0 +1,24 @@
+<script setup lang="ts">
+interface Props {
+  statusCode?: string | number;
+  title?: string;
+  description?: string;
+}
+
+const props = defineProps<Props>();
+</script>
+
+<template>
+  <div class="text-center">
+    <!-- 👉 Title and subtitle -->
+    <h1 v-if="props.statusCode" class="header-title font-weight-medium mb-2">
+      {{ props.statusCode }}
+    </h1>
+    <h4 v-if="props.title" class="text-h4 font-weight-medium mb-2">
+      {{ props.title }}
+    </h4>
+    <p v-if="props.description" class="text-body-1 mb-6">
+      {{ props.description }}
+    </p>
+  </div>
+</template>

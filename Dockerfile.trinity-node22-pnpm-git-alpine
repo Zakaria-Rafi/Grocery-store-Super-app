@@ -1,0 +1,8 @@
+FROM --platform=linux/amd64 node:22-alpine
+
+RUN apk --update --no-cache add git libxi mesa-gl lcov
+RUN apk --no-cache add bash curl
+
+RUN corepack enable
+RUN corepack prepare pnpm@9.0.6 --activate
+RUN pnpm config set store-dir .pnpm-store

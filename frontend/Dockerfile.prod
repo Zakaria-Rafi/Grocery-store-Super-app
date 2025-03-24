@@ -1,0 +1,23 @@
+# Étape de base
+FROM --platform=linux/amd64 rg.fr-par.scw.cloud/epitech-nantes-at/trinity-node22-pnpm-git-alpine:latest AS base
+
+# Définir le répertoire de travail
+WORKDIR /src
+
+# Étape de build
+FROM base AS build
+COPY --link package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --only=production
+
+COPY --link . .
+RUN pnpm build
+
+# Étape finale
+FROM base AS prod
+ENV PORT=3000
+ENV NODE_ENV=production
+
+COPY --from=build /src/.output /src/.output
+
+EXPOSE $PORT
+CMD [ "node", ".output/server/index.mjs" ]
